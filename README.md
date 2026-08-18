@@ -57,6 +57,15 @@ The state is shared by main and subagent sessions in the same OMP process. Resta
 
 The extension operates through OMP's `before_provider_request` hook. Calls that do not pass through that extension hook, including some internal one-shot helpers, cannot be modified.
 
+## Migrating from the generic Git form
+
+OMP/Bun can currently report a `DependencyLoop` when an existing installation recorded as `https://github.com/...` is updated through the `github:owner/repo` shorthand. This is a one-time source migration issue; remove the old registry entry before reinstalling:
+
+```bash
+omp plugin uninstall omp-model-service-tier
+omp plugin install github:anatoli-tsinovoy/omp-model-service-tier
+```
+
 ## Development
 
 ```bash
