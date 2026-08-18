@@ -82,7 +82,7 @@ export function injectModelServiceTier(payload: unknown, tier: ModelServiceTier)
 export function registerModelServiceTierExtension(pi: ExtensionAPI, tiers: ModelServiceTierMap): void {
 
 	pi.registerCommand("model-service-tier", {
-		description: "Enable or disable per-model service-tier injection",
+		description: "Set service-tier injection on or off: /model-service-tier on|off",
 		getArgumentCompletions(argumentPrefix) {
 			if (argumentPrefix.includes(" ")) return null;
 			const normalized = argumentPrefix.trim().toLowerCase();
@@ -92,10 +92,14 @@ export function registerModelServiceTierExtension(pi: ExtensionAPI, tiers: Model
 			].filter(item => item.value.startsWith(normalized));
 		},
 		async handler(args, ctx) {
-			const value = args.trim().toLowerCase();
+			let value = args.trim().toLowerCase();
 			if (value === "") {
-				ctx.ui.notify(`Model service-tier injection is ${injectionEnabled ? "on" : "off"}`, "info");
-				return;
+				const selected = await ctx.ui.select(`Model service-tier injection (currently ${injectionEnabled ? "on" : "off"})`, [
+					"on",
+					"off",
+				]);
+				if (!selected) return;
+				value = selected;
 			}
 			if (value !== "on" && value !== "off") {
 				ctx.ui.notify("Usage: /model-service-tier <on|off>", "warning");

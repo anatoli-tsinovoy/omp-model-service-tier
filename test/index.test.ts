@@ -49,19 +49,33 @@ describe("model service-tier extension", () => {
 		) => unknown;
 		type CommandHandler = (
 			args: string,
-			ctx: { ui: { notify(message: string, level: "info" | "warning"): void } },
-		) => Promise<void> | void;
+			ctx: {
+				ui: {
+					notify(message: string, level: "info" | "warning"): void;
+					select(title: string, options: string[]): Promise<string | undefined>;
+				};
+			},
+		) => Promise<void>;
+		interface CommandOptions {
+			description?: string;
+			getArgumentCompletions?: (argumentPrefix: string) => Array<{ value: string }> | null;
+			handler: CommandHandler;
+		}
 
 		let providerHandler: ProviderRequestHandler | undefined;
 		let commandHandler: CommandHandler | undefined;
+		let commandOptions: CommandOptions | undefined;
 		let peerProviderHandler: ProviderRequestHandler | undefined;
 		const notifications: string[] = [];
 		const extensionApi = {
 			on(event: string, registered: ProviderRequestHandler) {
 				if (event === "before_provider_request") providerHandler = registered;
 			},
-			registerCommand(name: string, options: { handler: CommandHandler }) {
-				if (name === "model-service-tier") commandHandler = options.handler;
+			registerCommand(name: string, options: CommandOptions) {
+				if (name === "model-service-tier") {
+					commandHandler = options.handler;
+					commandOptions = options;
+				}
 			},
 		} as unknown as ExtensionAPI;
 		const peerExtensionApi = {
@@ -80,6 +94,7 @@ describe("model service-tier extension", () => {
 		if (!providerHandler) throw new Error("before_provider_request handler was not registered");
 		if (!commandHandler) throw new Error("model-service-tier command was not registered");
 		if (!peerProviderHandler) throw new Error("peer before_provider_request handler was not registered");
+		if (!commandOptions) throw new Error("model-service-tier command options were not registered");
 
 		const lunaEvent = { type: "before_provider_request" as const, payload: { service_tier: "default" } };
 		const lunaContext = { model: { provider: "openai", id: "gpt-5.6-luna" } };
@@ -88,11 +103,16 @@ describe("model service-tier extension", () => {
 				notify(message: string) {
 					notifications.push(message);
 				},
+				async select() {
+					return "off";
+				},
 			},
 		};
 
 		expect(providerHandler(lunaEvent, lunaContext)).toEqual({ service_tier: "priority" });
-		await commandHandler("off", commandContext);
+		expect(commandOptions.description).toContain("/model-service-tier on|off");
+		expect(commandOptions.getArgumentCompletions?.("")?.map(item => item.value)).toEqual(["on", "off"]);
+		await commandHandler("", commandContext);
 		expect(providerHandler(lunaEvent, lunaContext)).toBeUndefined();
 		expect(peerProviderHandler(lunaEvent, lunaContext)).toBeUndefined();
 		await commandHandler("on", commandContext);
