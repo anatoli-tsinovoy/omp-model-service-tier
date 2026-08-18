@@ -54,6 +54,7 @@ describe("model service-tier extension", () => {
 
 		let providerHandler: ProviderRequestHandler | undefined;
 		let commandHandler: CommandHandler | undefined;
+		let peerProviderHandler: ProviderRequestHandler | undefined;
 		const notifications: string[] = [];
 		const extensionApi = {
 			on(event: string, registered: ProviderRequestHandler) {
@@ -63,12 +64,22 @@ describe("model service-tier extension", () => {
 				if (name === "model-service-tier") commandHandler = options.handler;
 			},
 		} as unknown as ExtensionAPI;
+		const peerExtensionApi = {
+			on(event: string, registered: ProviderRequestHandler) {
+				if (event === "before_provider_request") peerProviderHandler = registered;
+			},
+			registerCommand() {},
+		} as unknown as ExtensionAPI;
 		registerModelServiceTierExtension(extensionApi, {
 			"gpt-5.6-luna": "priority",
 			"gpt-5.6-sol": "none",
 		});
+		registerModelServiceTierExtension(peerExtensionApi, {
+			"gpt-5.6-luna": "priority",
+		});
 		if (!providerHandler) throw new Error("before_provider_request handler was not registered");
 		if (!commandHandler) throw new Error("model-service-tier command was not registered");
+		if (!peerProviderHandler) throw new Error("peer before_provider_request handler was not registered");
 
 		const lunaEvent = { type: "before_provider_request" as const, payload: { service_tier: "default" } };
 		const lunaContext = { model: { provider: "openai", id: "gpt-5.6-luna" } };
@@ -83,8 +94,10 @@ describe("model service-tier extension", () => {
 		expect(providerHandler(lunaEvent, lunaContext)).toEqual({ service_tier: "priority" });
 		await commandHandler("off", commandContext);
 		expect(providerHandler(lunaEvent, lunaContext)).toBeUndefined();
+		expect(peerProviderHandler(lunaEvent, lunaContext)).toBeUndefined();
 		await commandHandler("on", commandContext);
 		expect(providerHandler(lunaEvent, lunaContext)).toEqual({ service_tier: "priority" });
+		expect(peerProviderHandler(lunaEvent, lunaContext)).toEqual({ service_tier: "priority" });
 		expect(notifications).toEqual([
 			"Model service-tier injection disabled",
 			"Model service-tier injection enabled",

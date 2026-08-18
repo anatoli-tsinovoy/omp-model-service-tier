@@ -5,6 +5,7 @@ import { isEnoent } from "@oh-my-pi/pi-utils";
 
 const MODEL_SERVICE_TIER_VALUES = ["none", "auto", "default", "flex", "scale", "priority"] as const;
 const CONFIG_FILENAME = "omp-model-service-tier.yml";
+let injectionEnabled = true;
 
 export type ModelServiceTier = (typeof MODEL_SERVICE_TIER_VALUES)[number];
 export type ModelServiceTierMap = Readonly<Record<string, ModelServiceTier>>;
@@ -79,7 +80,6 @@ export function injectModelServiceTier(payload: unknown, tier: ModelServiceTier)
 }
 
 export function registerModelServiceTierExtension(pi: ExtensionAPI, tiers: ModelServiceTierMap): void {
-	let enabled = true;
 
 	pi.registerCommand("model-service-tier", {
 		description: "Enable or disable per-model service-tier injection",
@@ -94,7 +94,7 @@ export function registerModelServiceTierExtension(pi: ExtensionAPI, tiers: Model
 		async handler(args, ctx) {
 			const value = args.trim().toLowerCase();
 			if (value === "") {
-				ctx.ui.notify(`Model service-tier injection is ${enabled ? "on" : "off"}`, "info");
+				ctx.ui.notify(`Model service-tier injection is ${injectionEnabled ? "on" : "off"}`, "info");
 				return;
 			}
 			if (value !== "on" && value !== "off") {
@@ -102,13 +102,13 @@ export function registerModelServiceTierExtension(pi: ExtensionAPI, tiers: Model
 				return;
 			}
 
-			enabled = value === "on";
-			ctx.ui.notify(`Model service-tier injection ${enabled ? "enabled" : "disabled"}`, "info");
+			injectionEnabled = value === "on";
+			ctx.ui.notify(`Model service-tier injection ${injectionEnabled ? "enabled" : "disabled"}`, "info");
 		},
 	});
 
 	pi.on("before_provider_request", (event, ctx) => {
-		if (!enabled) return;
+		if (!injectionEnabled) return;
 		const model = ctx.model;
 		if (!model) return;
 		const tier = resolveModelServiceTier(tiers, model);
