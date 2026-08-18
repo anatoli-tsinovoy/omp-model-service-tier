@@ -79,7 +79,36 @@ export function injectModelServiceTier(payload: unknown, tier: ModelServiceTier)
 }
 
 export function registerModelServiceTierExtension(pi: ExtensionAPI, tiers: ModelServiceTierMap): void {
+	let enabled = true;
+
+	pi.registerCommand("model-service-tier", {
+		description: "Enable or disable per-model service-tier injection",
+		getArgumentCompletions(argumentPrefix) {
+			if (argumentPrefix.includes(" ")) return null;
+			const normalized = argumentPrefix.trim().toLowerCase();
+			return [
+				{ label: "on", value: "on", description: "Enable service-tier injection" },
+				{ label: "off", value: "off", description: "Disable service-tier injection" },
+			].filter(item => item.value.startsWith(normalized));
+		},
+		async handler(args, ctx) {
+			const value = args.trim().toLowerCase();
+			if (value === "") {
+				ctx.ui.notify(`Model service-tier injection is ${enabled ? "on" : "off"}`, "info");
+				return;
+			}
+			if (value !== "on" && value !== "off") {
+				ctx.ui.notify("Usage: /model-service-tier <on|off>", "warning");
+				return;
+			}
+
+			enabled = value === "on";
+			ctx.ui.notify(`Model service-tier injection ${enabled ? "enabled" : "disabled"}`, "info");
+		},
+	});
+
 	pi.on("before_provider_request", (event, ctx) => {
+		if (!enabled) return;
 		const model = ctx.model;
 		if (!model) return;
 		const tier = resolveModelServiceTier(tiers, model);

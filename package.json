@@ -1,6 +1,6 @@
 {
   "name": "omp-model-service-tier",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Inject per-model service tiers into OMP provider requests",
   "type": "module",
   "author": "anatoli-tsinovoy",
