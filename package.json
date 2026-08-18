@@ -1,6 +1,6 @@
 {
   "name": "omp-model-service-tier",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Inject per-model service tiers into OMP provider requests",
   "type": "module",
   "author": "anatoli-tsinovoy",
@@ -28,8 +28,8 @@
     "check": "bun run typecheck && bun test"
   },
   "peerDependencies": {
-    "@oh-my-pi/pi-coding-agent": ">=17.3.7",
-    "@oh-my-pi/pi-utils": ">=17.3.7"
+    "@oh-my-pi/pi-coding-agent": ">=17.2.10",
+    "@oh-my-pi/pi-utils": ">=17.2.10"
   },
   "devDependencies": {
     "@oh-my-pi/pi-coding-agent": "^17.3.7",

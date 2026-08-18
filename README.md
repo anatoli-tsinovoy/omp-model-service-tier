@@ -5,7 +5,7 @@ OMP extension that injects `service_tier` per model immediately before supported
 ## Install
 
 ```bash
-omp plugin install git:github.com/anatoli-tsinovoy/omp-model-service-tier
+omp plugin install github:anatoli-tsinovoy/omp-model-service-tier
 ```
 
 ## Configure
