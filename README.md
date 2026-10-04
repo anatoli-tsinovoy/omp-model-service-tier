@@ -1,3 +1,5 @@
+# do not install this plugin, functionality roughly equivalent to this (per-task-agent tier rather than per-model-slug tier) has been upstreamed
+
 # omp-model-service-tier
 
 OMP extension that injects `service_tier` per model immediately before supported provider requests are sent.
